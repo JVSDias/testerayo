@@ -42,7 +42,8 @@ function csvToArray(str, delimiter = ',') {
 // Função para transformar link compartilhado do Google Drive em link direto
 function transformarLinkGoogleDrive(link) {
   if (!link) return '';
-  const match = link.match(/\/d\/(.*?)\//);
+  // Captura ID tanto no padrão "/file/d/ID/" quanto "/d/ID/"
+  const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (match && match[1]) {
     return `https://drive.google.com/uc?export=view&id=${match[1]}`;
   }
