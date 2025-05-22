@@ -4,10 +4,10 @@
 <meta charset="UTF-8" />
 <title>Status do Usuário</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 2rem; }
-  .info { margin-top: 1rem; }
-  .foto { margin-top: 1rem; }
-  .foto img { max-width: 200px; height: auto; border: 1px solid #ccc; }
+  body { font-family: Arial, sans-serif; margin: 2rem; background: #f9f9f9; }
+  h1 { color: #333; }
+  .info { margin-top: 1rem; font-size: 1.1rem; }
+  .foto img { margin-top: 1rem; max-width: 200px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 </style>
 </head>
 <body>
@@ -16,9 +16,9 @@
 
 <div id="result">Carregando...</div>
 
-<script>    
-// URL da planilha publicada (CSV)
-const sheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIIQqppQ_L_bzHaiZRIR5wO0lkgs-108O62oJDodI4EXlejA_v_UEMU9bXnJIHj4bxKhxDkzWN4U6x/pub?gid=0&single=true&output=csv';
+<script>
+// URL da planilha publicada (com CORS proxy)
+const sheetCsvUrl = 'https://corsproxy.io/?https://docs.google.com/spreadsheets/d/e/2PACX-1vTIIQqppQ_L_bzHaiZRIR5wO0lkgs-108O62oJDodI4EXlejA_v_UEMU9bXnJIHj4bxKhxDkzWN4U6x/pub?gid=0&single=true&output=csv';
 
 // Função para pegar o parâmetro "id" da URL
 function getIdFromUrl() {
@@ -39,14 +39,14 @@ function csvToArray(str, delimiter = ',') {
   });
 }
 
-// Função para transformar link do Google Drive em link direto
+// Função para transformar link compartilhado do Google Drive em link direto
 function transformarLinkGoogleDrive(link) {
-  const regex = /\/d\/([a-zA-Z0-9_-]+)\//;
-  const match = link.match(regex);
+  if (!link) return '';
+  const match = link.match(/\/d\/(.*?)\//);
   if (match && match[1]) {
     return `https://drive.google.com/uc?export=view&id=${match[1]}`;
   }
-  return ''; // Se não for um link válido, retorna vazio
+  return link; // Se não for um link do Drive, retorna o original.
 }
 
 // Função principal
@@ -61,7 +61,11 @@ async function showUserStatus() {
   try {
     const response = await fetch(sheetCsvUrl);
     const csvText = await response.text();
-    const data = csvToArray(csvText, '\t');  // Separador TAB (como está no seu exemplo)
+    console.log("Texto bruto do CSV:", csvText);
+
+    const data = csvToArray(csvText, ',');
+    console.log("Dados convertidos:", data);
+    console.log("Procurando ID:", id);
 
     const user = data.find(u => u.ID === id);
     if (!user) {
@@ -69,12 +73,9 @@ async function showUserStatus() {
       return;
     }
 
-    // Transformar o link do Google Drive em um link direto
     const linkDireto = transformarLinkGoogleDrive(user.Foto);
-
     const imagemHtml = linkDireto ? `<div class="foto"><img src="${linkDireto}" alt="Foto de ${user.Nome}"></div>` : '';
 
-    // Mostra os dados do usuário
     resultDiv.innerHTML = `
       <div class="info"><b>Nome:</b> ${user.Nome}</div>
       <div class="info"><b>Status:</b> ${user.Status}</div>
